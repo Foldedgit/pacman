@@ -136,7 +136,38 @@ def breadthFirstSearch(problem):
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    from util import PriorityQueue as pqueue
+    pqueue = pqueue()
+    explored = []
+    pqueue.push(([], problem.getStartState()), 0)
+
+    while not pqueue.isEmpty():
+        path, location = pqueue.pop()
+        explored.append(location)
+
+        if problem.isGoalState(location):
+            return path
+
+        s = problem.getSuccessors(location)
+        s = [x for x in s if x[0] not in explored]
+        s1 = [x for x in s if (x[0] not in (y[2][1] for y in pqueue.heap))]
+        s2 = [x for x in s if (x[0] in (y[2][1] for y in pqueue.heap))]
+
+        for x in s1:
+            fullPath = path + [x[1]]
+            cost = problem.getCostOfActions(fullPath)
+            pqueue.push((fullPath, x[0]), cost)
+
+        for x in s2:
+            for y in pqueue.heap:
+                if y[2][1] == x[0]:
+                    excost = problem.getCostOfActions(y[2][0])
+
+            cost = problem.getCostOfActions(path + [x[1]])
+
+            if excost > cost:
+                fullPath = path + [x[1]]
+                pqueue.update((fullPath, x[0]), cost)
 
 def nullHeuristic(state, problem=None):
     """
