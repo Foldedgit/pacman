@@ -88,10 +88,11 @@ def depthFirstSearch(problem):
     """
     "*** YOUR CODE HERE ***"
     from util import Stack as stack
-    stack = stack()
-    explored = []
-    stack.push(([], problem.getStartState()))
+    stack = stack()        # Depth First Search => Last in First out strategy using stack
+    explored = []          # Memorize explored nodes
+    stack.push(([], problem.getStartState()))   # push the problem into stack class
 
+    # pop from the stack until get the goal or explore all the nodes
     while not stack.isEmpty():
         path, location = stack.pop()
         explored.append(location)
@@ -101,9 +102,10 @@ def depthFirstSearch(problem):
 
         s = [x for x in problem.getSuccessors(location) if x[0] not in explored]
 
+        # update the path
         for x in s:
-            fullpath = path + [x[1]] # Calculate new path
-            stack.push((fullpath,x[0]))
+            fullpath = path + [x[1]]
+            stack.push((fullpath, x[0]))
 
     print('Stack is empty')
     return []
@@ -112,10 +114,11 @@ def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
     from util import Queue as queue
-    queue = queue()
-    explored = []
-    queue.push(([], problem.getStartState()))
+    queue = queue()         # Breadth First Search => First in First out strategy using queue
+    explored = []           # Memorize the explored nodes
+    queue.push(([], problem.getStartState()))       # push the problem into queue class
 
+    # pop from the queue until get the goal or explore all the nodes
     while not queue.isEmpty():
         path, location = queue.pop()
         explored.append(location)
@@ -126,6 +129,7 @@ def breadthFirstSearch(problem):
         s = [x for x in problem.getSuccessors(location) if
              x[0] not in explored and x[0] not in (y[1] for y in queue.list)]
 
+        # update the path
         for item in s:
             fullpath = path + [item[1]]
             queue.push((fullpath, item[0]))
@@ -137,10 +141,11 @@ def uniformCostSearch(problem):
     """Search the node of least total cost first."""
     "*** YOUR CODE HERE ***"
     from util import PriorityQueue as pqueue
-    pqueue = pqueue()
-    explored = []
-    pqueue.push(([], problem.getStartState()), 0)
+    pqueue = pqueue()       # uniform cost search => need to pop based on priority using PriorityQueue class
+    explored = []           # memorize explored nodes
+    pqueue.push(([], problem.getStartState()), 0)   # push the problem into PriorityQueue class
 
+    # pop the nodes until get the goal or explore all the nodes
     while not pqueue.isEmpty():
         path, location = pqueue.pop()
         explored.append(location)
@@ -153,6 +158,7 @@ def uniformCostSearch(problem):
         s1 = [x for x in s if (x[0] not in (y[2][1] for y in pqueue.heap))]
         s2 = [x for x in s if (x[0] in (y[2][1] for y in pqueue.heap))]
 
+# update the path based on cost
         for x in s1:
             fullPath = path + [x[1]]
             cost = problem.getCostOfActions(fullPath)
@@ -180,10 +186,12 @@ def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
     from util import PriorityQueue as pqueue
-    pqueue = pqueue()
-    explored = []
-    pqueue.push(([], problem.getStartState(), 0), 0)
+    pqueue = pqueue()   # A* search => need to pop based on priority using PriorityQueue class
+    explored = []       # memorize the explored nodes
+    pqueue.push(([], problem.getStartState(), 0), 0)    # push the problem into PriorityQueue class
     print(__name__)
+
+    # pop the nodes until get the goal or explore all the nodes
     while not pqueue.isEmpty():
         path, location, cost = pqueue.pop()
         if location in explored:
@@ -194,6 +202,7 @@ def aStarSearch(problem, heuristic=nullHeuristic):
 
         s = problem.getSuccessors(location)
         s = [x for x in s if x[0] not in explored]
+        # update the path
         if s:
             explored.append(location)
             for x in s:
