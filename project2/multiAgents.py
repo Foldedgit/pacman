@@ -153,7 +153,45 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns whether or not the game state is a losing state
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        def minMax(nAgent, state, depth):
+            # go to the next layer and reset the number of agents
+            if nAgent + 1 > state.getNumAgents():
+                depth += 1
+                nAgent = 0
+
+            maxval = ["", -99999]  # initialize maximum value
+            minval = ["", 99999]  # initialize minimum value
+
+            posbmov = state.getLegalActions(nAgent)  # All possible movements
+
+            # no movement possible
+            if not posbmov:
+                return self.evaluationFunction(state)
+            # set depth limit
+            if depth == self.depth:
+                return self.evaluationFunction(state)
+
+            # calculate minval and maxval for all nodes corresponding possible movement, agents and ghosts
+            for step in posbmov:
+                cstate = state.generateSuccessor(nAgent, step)  # get the current successor game state
+
+                cval = minMax(nAgent + 1, cstate, depth)  # get current min or max value
+                try:
+                    cval = cval[1]
+                except:
+                    cval = cval
+                # compare current min/max value with previous ones
+                if cval > maxval[1] and nAgent == 0:
+                    maxval = [step, cval]
+                elif cval < minval[1]:
+                    minval = [step, cval]
+
+            # return the result
+            if nAgent == 0:
+                return maxval
+            return minval
+
+        return minMax(0, gameState, 0)[0]
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
