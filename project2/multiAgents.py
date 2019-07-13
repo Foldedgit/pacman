@@ -74,6 +74,8 @@ class ReflexAgent(Agent):
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
 
         "*** YOUR CODE HERE ***"
+        ' Evaluate the possible movements by the distance from foods, ghosts '
+
         newFood = newFood.asList() #remaining food dots
         minCost = float('inf')  #  min distance to closest food dot
 
@@ -82,14 +84,14 @@ class ReflexAgent(Agent):
             if manhattanDistance(newPos, food) < minCost:
                 minCost = manhattanDistance(newPos, food)
 
-        interest = 1 / (minCost + 0.1)  # value of the movement
+        interest = 1 / (minCost + 0.1)  # value of the movement = reward
 
         for ghost in successorGameState.getGhostPositions():
             if manhattanDistance(ghost, newPos) < 1:  # will be eaten by ghost
-                interest = -float('inf')
+                interest = -float('inf')              # penalty
 
             elif manhattanDistance(ghost, newPos) < 4:  # close to a ghost
-                interest = - interest
+                interest = - interest                   # penalty
                 break
 
         return successorGameState.getScore() + interest
@@ -153,6 +155,19 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns whether or not the game state is a losing state
         """
         "*** YOUR CODE HERE ***"
+        """
+        if the state is a terminal state: return the state’s utility
+        if the next agent is MAX: return max-value(state)
+        if the next agent is MIN: return min-value(state)
+        
+        initialize v = -∞
+        for each successor of state:
+        v = max(v, value(successor))
+        
+        initialize v = +∞
+        for each successor of state:
+        v = min(v, value(successor))
+        """
         def minMax(nAgent, state, depth):
             # go to the next layer and reset the number of agents
             if nAgent + 1 > state.getNumAgents():
@@ -186,7 +201,6 @@ class MinimaxAgent(MultiAgentSearchAgent):
                     continue
                 if cval < minval[1]:
                     minval = [step, cval]
-
             # return the result
             if nAgent == 0:
                 return maxval
@@ -204,7 +218,23 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         Returns the minimax action using self.depth and self.evaluationFunction
         """
         "*** YOUR CODE HERE ***"
-        def minMax(nAgent, state, depth, alpha, beta):
+        """
+        α: MAX’s best option on path to root
+        β: MIN’s best option on path to root
+        
+        initialize v = -∞
+        for each successor of state:
+        v = max(v, value(successor, α, β))
+        if v ≥ β return v
+        α = max(α, v)
+        
+        initialize v = +∞
+        for each successor of state:
+        v = min(v, value(successor, α, β))
+        if v ≤ α return v
+        β = min(β, v)
+        """
+        def alphaBeta(nAgent, state, depth, alpha, beta):
             # go to the next layer and reset the number of agents
             if nAgent + 1 > state.getNumAgents():
                 depth += 1
@@ -226,7 +256,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
             for step in posbmov:
                 cstate = state.generateSuccessor(nAgent, step)  # get the current successor game state
 
-                cval = minMax(nAgent + 1, cstate, depth, alpha, beta)  # get current min or max value
+                cval = alphaBeta(nAgent + 1, cstate, depth, alpha, beta)  # get current min or max value
                 try:
                     cval = cval[1]
                 except:
@@ -239,19 +269,17 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
                         return [step, cval]
                     alpha = max(alpha, cval)
                     continue
-
                 if cval < minval[1]:
                     minval = [step, cval]
                 if cval < alpha:
                     return [step, cval]
                 beta = min(beta, cval)
-
             # return the result
             if nAgent == 0:
                 return maxval
             return minval
 
-        return minMax(0, gameState, 0, -float('inf'), float('inf'))[0]
+        return alphaBeta(0, gameState, 0, -float('inf'), float('inf'))[0]
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
@@ -266,38 +294,57 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         legal moves.
         """
         "*** YOUR CODE HERE ***"
+        """
+        if the state is a terminal state: return the state’s utility
+        if the next agent is MAX: return max-value(state)
+        if the next agent is EXP: return exp-value(state)
+        
+        initialize v = -∞
+        for each successor of state:
+        v = max(v, value(successor))
+        
+        initialize v = 0
+        for each successor of state:
+        p = probability(successor)
+        v += p * value(successor)
+        """
         def expectimax(nAgent, state, depth):
+            # go to the next layer and reset the number of agents
             if nAgent + 1 > state.getNumAgents():
                 depth += 1
                 nAgent = 0
 
-            posbmov = state.getLegalActions(nAgent)
+            posbmov = state.getLegalActions(nAgent)     # All possible movements
+            # no movement possible
             if not posbmov:
                 return self.evaluationFunction(state)
-            maxval = ["", -float('inf')]
-            expcval = ["", 0]
+            maxval = ["", -float('inf')]        # initialize maximum value
+            expcval = ["", 0]                   # initialize expected value
             prob = 1.0 / len(posbmov)
+            # set depth limit
             if depth == self.depth or state.isWin() or state.isLose():
                 return self.evaluationFunction(state)
 
+            # calculate expected value and maxval for all nodes corresponding possible movement, agents and ghosts
             for step in posbmov:
-                cstate = state.generateSuccessor(nAgent, step)
-                cval = expectimax(nAgent + 1, cstate, depth)
+                cstate = state.generateSuccessor(nAgent, step)      # get the current successor game state
+                cval = expectimax(nAgent + 1, cstate, depth)        # get current expectimax value
 
                 try:
                     cval = cval[1]
                 except:
                     cval = cval
-
+                # compare current expectimax value with previous ones
                 if cval > maxval[1] and nAgent == 0:
-                        maxval = [step, cval]
-                        continue
+                    maxval = [step, cval]
+                    continue
                 expcval[0] = step
                 expcval[1] += cval * prob
-
+            # return the result
             if nAgent == 0:
                 return maxval
             return expcval
+
         return expectimax(0, gameState, 0)[0]
 
 def betterEvaluationFunction(currentGameState):
