@@ -75,7 +75,7 @@ class ReflexAgent(Agent):
 
         "*** YOUR CODE HERE ***"
         newFood = newFood.asList() #remaining food dots
-        minCost = 99999  #  min distance to closest food dot
+        minCost = float('inf')  #  min distance to closest food dot
 
         # find the nearest food dot
         for food in newFood:
@@ -86,7 +86,7 @@ class ReflexAgent(Agent):
 
         for ghost in successorGameState.getGhostPositions():
             if manhattanDistance(ghost, newPos) < 1:  # will be eaten by ghost
-                interest = -99999
+                interest = -float('inf')
 
             elif manhattanDistance(ghost, newPos) < 4:  # close to a ghost
                 interest = - interest
@@ -159,8 +159,8 @@ class MinimaxAgent(MultiAgentSearchAgent):
                 depth += 1
                 nAgent = 0
 
-            maxval = ["", -99999]  # initialize maximum value
-            minval = ["", 99999]  # initialize minimum value
+            maxval = ["", -float('inf')]  # initialize maximum value
+            minval = ["", float('inf')]  # initialize minimum value
 
             posbmov = state.getLegalActions(nAgent)  # All possible movements
 
@@ -183,7 +183,8 @@ class MinimaxAgent(MultiAgentSearchAgent):
                 # compare current min/max value with previous ones
                 if cval > maxval[1] and nAgent == 0:
                     maxval = [step, cval]
-                elif cval < minval[1]:
+                    continue
+                if cval < minval[1]:
                     minval = [step, cval]
 
             # return the result
@@ -203,7 +204,54 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         Returns the minimax action using self.depth and self.evaluationFunction
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        def minMax(nAgent, state, depth, alpha, beta):
+            # go to the next layer and reset the number of agents
+            if nAgent + 1 > state.getNumAgents():
+                depth += 1
+                nAgent = 0
+
+            maxval = ["", -float('inf')]  # initialize maximum value
+            minval = ["", float('inf')]  # initialize minimum value
+
+            posbmov = state.getLegalActions(nAgent)  # All possible movements
+
+            # no movement possible
+            if not posbmov:
+                return self.evaluationFunction(state)
+            # set depth limit
+            if depth == self.depth:
+                return self.evaluationFunction(state)
+
+            # calculate minval and maxval for all nodes corresponding possible movement, agents and ghosts
+            for step in posbmov:
+                cstate = state.generateSuccessor(nAgent, step)  # get the current successor game state
+
+                cval = minMax(nAgent + 1, cstate, depth, alpha, beta)  # get current min or max value
+                try:
+                    cval = cval[1]
+                except:
+                    cval = cval
+                # compare current min/max value with previous ones
+                if nAgent == 0:
+                    if cval > maxval[1]:
+                        maxval = [step, cval]
+                    if cval > beta:
+                        return [step, cval]
+                    alpha = max(alpha, cval)
+                    continue
+
+                if cval < minval[1]:
+                    minval = [step, cval]
+                if cval < alpha:
+                    return [step, cval]
+                beta = min(beta, cval)
+
+            # return the result
+            if nAgent == 0:
+                return maxval
+            return minval
+
+        return minMax(0, gameState, 0, -float('inf'), float('inf'))[0]
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
@@ -218,7 +266,39 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         legal moves.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        def expectimax(nAgent, state, depth):
+            if nAgent + 1 > state.getNumAgents():
+                depth += 1
+                nAgent = 0
+
+            posbmov = state.getLegalActions(nAgent)
+            if not posbmov:
+                return self.evaluationFunction(state)
+            maxval = ["", -float('inf')]
+            expcval = ["", 0]
+            prob = 1.0 / len(posbmov)
+            if depth == self.depth or state.isWin() or state.isLose():
+                return self.evaluationFunction(state)
+
+            for step in posbmov:
+                cstate = state.generateSuccessor(nAgent, step)
+                cval = expectimax(nAgent + 1, cstate, depth)
+
+                try:
+                    cval = cval[1]
+                except:
+                    cval = cval
+
+                if cval > maxval[1] and nAgent == 0:
+                        maxval = [step, cval]
+                        continue
+                expcval[0] = step
+                expcval[1] += cval * prob
+
+            if nAgent == 0:
+                return maxval
+            return expcval
+        return expectimax(0, gameState, 0)[0]
 
 def betterEvaluationFunction(currentGameState):
     """
